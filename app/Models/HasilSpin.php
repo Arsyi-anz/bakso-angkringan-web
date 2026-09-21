@@ -7,14 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-/**
- * @property int $id
- * @property int $customer_id
- * @property int|null $transaksi_id
- * @property int|null $bukti_ig_story_id
- * @property string $jenis_reward
- * @property \Illuminate\Support\Carbon $tanggal_spin
- */
 class HasilSpin extends Model
 {
     use HasFactory;

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -13,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $nama
  * @property string $no_hp
  * @property string $password
- * @property string|null $kode_referral
+ * @property string $kode_referral
  * @property \Illuminate\Support\Carbon $tanggal_daftar
  */
 class Customer extends Model
@@ -40,14 +41,20 @@ class Customer extends Model
         ];
     }
 
-    public function referralGiven()
+    /**
+     * Referral yang DIBERIKAN customer ini (customer_id = pemberi).
+     */
+    public function referralGiven(): HasMany
     {
-        return $this->hasMany(Referral::classforeignId('referral_customer_id')->nullable() ?? $this->hasMany(Referral::class));
+        return $this->hasMany(Referral::class, 'customer_id');
     }
 
-    public function referrals()
+    /**
+     * Referral yang DITERIMA customer ini (referred_customer_id).
+     */
+    public function referralReceived(): HasMany
     {
-        return $this->hasMany(Referral::class);
+        return $this->hasMany(Referral::class, 'referred_customer_id');
     }
 
     public function transaksis(): HasMany
