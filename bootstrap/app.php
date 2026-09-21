@@ -14,9 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->redirectGuestsTo(function (Request $request) {
-            return $request->is('api/*') ? null : '/';
-        });
+        $middleware->redirectGuestsTo(
+            fn (Request $request): ?string => $request->is('api/*') || $request->expectsJson() ? null : route('login'),
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
