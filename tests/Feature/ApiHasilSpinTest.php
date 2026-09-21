@@ -207,4 +207,100 @@ class ApiHasilSpinTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_status_spin_awal_tidak_punya_kesempatan(): void
+    {
+        $response = $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status');
+
+        $response->assertOk()
+            ->assertJsonPath('data.punya_kesempatan', false)
+            ->assertJsonPath('data.sisa_kuota_upload_hari_ini', 1);
+    }
+
+    public function test_status_spin_ada_kesempatan_dari_transaksi(): void
+    {
+        $transaksi = $this->makeTransaksi(150000);
+
+        $response = $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status');
+
+        $response->assertOk()
+            ->assertJsonPath('data.punya_kesempatan', true)
+            ->assertJsonCount(1, 'data.transaksi_bisa_spin')
+            ->assertJsonPath('data.transaksi_bisa_spin.0.id', $transaksi->id);
+    }
+
+    public function test_status_spin_tidak_menghitung_transaksi_yang_sudah_di_spin(): void
+    {
+        $transaksi = $this->makeTransaksi(150000);
+        $transaksi->refresh();
+
+        $this->withHeaders($this->loginHeaders())
+            ->postJson('/api/spin', ['transaksi_id' => $transaksi->id])
+            ->assertStatus(201);
+
+        $response = $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status');
+
+        $response->assertOk()
+            ->assertJsonPath('data.punya_kesempatan', false)
+            ->assertJsonCount(0, 'data.transaksi_bisa_spin');
+    }
+
+    public function test_status_spin_link_ig_diterima_bisa_claim(): void
+    {
+        $bukti = BuktiIgStory::create([
+            'customer_id' => $this->customer->id,
+            'admin_id' => null,
+            'url_bukti' => 'https://ig.com/story/claimable',
+            'status_verifikasi' => 'diterima',
+            'tanggal_kirim' => now(),
+        ]);
+
+        $response = $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status');
+
+        $response->assertOk()
+            ->assertJsonPath('data.punya_kesempatan', true)
+            ->assertJsonCount(1, 'data.link_ig_bisa_claim')
+            ->assertJsonPath('data.link_ig_bisa_claim.0.id', $bukti->id);
+    }
+
+    public function test_status_spin_tidak_menghitung_link_ig_lebih_dari_24_jam(): void
+    {
+        BuktiIgStory::create([
+            'customer_id' => $this->customer->id,
+            'admin_id' => null,
+            'url_bukti' => 'https://ig.com/story/expired',
+            'status_verifikasi' => 'diterima',
+            'tanggal_kirim' => now()->subHours(25),
+        ]);
+
+        $response = $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status');
+
+        $response->assertOk()
+            ->assertJsonPath('data.punya_kesempatan', false)
+            ->assertJsonCount(0, 'data.link_ig_bisa_claim');
+    }
+
+    public function test_status_spin_kuota_upload_hari_ini_berkurang(): void
+    {
+        $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status')
+            ->assertJsonPath('data.sisa_kuota_upload_hari_ini', 1);
+
+        BuktiIgStory::create([
+            'customer_id' => $this->customer->id,
+            'admin_id' => null,
+            'url_bukti' => 'https://ig.com/story/kuota',
+            'status_verifikasi' => 'pending',
+            'tanggal_kirim' => now(),
+        ]);
+
+        $this->withHeaders($this->loginHeaders())
+            ->getJson('/api/spin/status')
+            ->assertJsonPath('data.sisa_kuota_upload_hari_ini', 0);
+    }
 }

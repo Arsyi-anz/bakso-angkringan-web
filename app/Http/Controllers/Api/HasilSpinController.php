@@ -45,6 +45,41 @@ class HasilSpinController extends Controller
     }
 
     /**
+     * Status kesempatan spin untuk Home (button spin aktif/mati).
+     */
+    public function status(Request $request): JsonResponse
+    {
+        $customerId = $request->user()->id;
+
+        $transaksiBisaSpin = Transaksi::where('customer_id', $customerId)
+            ->where('total_transaksi', '>=', 100000)
+            ->whereDoesntHave('hasilSpins')
+            ->latest('tanggal_transaksi')
+            ->get(['id', 'total_transaksi', 'tanggal_transaksi']);
+
+        $linkIgBisaClaim = BuktiIgStory::where('customer_id', $customerId)
+            ->where('status_verifikasi', 'diterima')
+            ->where('tanggal_kirim', '>=', now()->subHours(24))
+            ->whereDoesntHave('hasilSpins')
+            ->latest('tanggal_kirim')
+            ->get(['id', 'url_bukti', 'tanggal_kirim']);
+
+        $jumlahUploadHariIni = BuktiIgStory::where('customer_id', $customerId)
+            ->where('tanggal_kirim', '>=', now()->startOfDay())
+            ->count();
+
+        return response()->json([
+            'data' => [
+                'punya_kesempatan' => $transaksiBisaSpin->isNotEmpty()
+                    || $linkIgBisaClaim->isNotEmpty(),
+                'transaksi_bisa_spin' => $transaksiBisaSpin,
+                'link_ig_bisa_claim' => $linkIgBisaClaim,
+                'sisa_kuota_upload_hari_ini' => max(0, 1 - $jumlahUploadHariIni),
+            ],
+        ]);
+    }
+
+    /**
      * Lakukan spin <= elibilitas: transaksi >= 100000 ATAU bukti IG story diterima.
      */
     public function store(Request $request): JsonResponse|JsonResource

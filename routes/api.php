@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // B5 - Spin & Win
     Route::post('/spin', [HasilSpinController::class, 'store']);
     Route::get('/spin/riwayat', [HasilSpinController::class, 'index']);
+    Route::get('/spin/status', [HasilSpinController::class, 'status']);
 
     // B6 - Voucher
     Route::get('/voucher', [VoucherController::class, 'index']);
