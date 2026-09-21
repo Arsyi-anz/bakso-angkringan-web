@@ -5,46 +5,56 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rule;
 
+/**
+ * A2 - Auth (register, login, logout)
+ */
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    /**
+     * Register customer baru + buat rujukan jika kode_referral diberikan.
+     */
+    public function register(Request $request)
     {
         $validated = $request->validate([
-            'nama' => ['required', 'string', 'max:100'],
-            'no_hp' => ['required', 'string', 'max:20', 'unique:customers,no_hp'],
-            'password' => ['required', 'confirmed', Password::min(8)],
-            'kode_referral' => ['nullable', 'string', 'max:20'],
+            'nama' => ['required', 'string', 'max:255'],
+            'no_hp' => ['required', 'string', 'unique:customers,no_hp'],
+            'password' => ['required', 'string', 'min:6'],
+            'kode_referral' => ['nullable', 'string', 'exists:customers,kode_referral'],
+            'tanggal_daftar' => ['nullable', 'date'],
         ]);
 
-        $customer = Customer::create([
-            'nama' => $validated['nama'],
-            'no_hp' => $validated['no_hp'],
-            'password' => Hash::make($validated['password']),
-            'kode_referral' => Str::upper(Str::random(8)),
-            'tanggal_daftar' => now(),
-        ]);
+        // Referral: kalau ada kode_referral, maka customer ini direferensikan oleh pemilik kode tsb.
+        $referralPemberi = null;
+        if ($validated['kode_referral'] ?? null) {
+            $referralPemberi = Customer::where('kode_referral', $validated['kode_referral'])->first();
+        }
 
-        // Referral: simpan sebagai pending bila kode referral diberikan
-        if (! empty($validated['kode_referral'])) {
-            $referrer = Customer::where('kode_referral', $validated['kode_referral'])->first();
+        $customer = DB::transaction(function () use ($validated, $referralPemberi): Customer {
+            $customer = Customer::create([
+                'nama' => $validated['nama'],
+                'no_hp' => $validated['no_hp'],
+                'password' => $validated['password'],
+                'tanggal_daftar' => $validated['tanggal_daftar'] ?? now(),
+            ]);
 
-            if ($referrer) {
-                $customer->referralGiven()->create([
+            if ($referralPemberi) {
+                Referral::create([
+                    'customer_id' => $referralPemberi->id,
                     'referred_customer_id' => $customer->id,
-                    'kode_referral' => $validated['kode_referral'],
+                    'kode_referral' => $customer->kode_referral,
                     'status_valid' => 'pending',
                     'tanggal' => now(),
                 ]);
             }
-        }
 
-        $token = $customer->createToken('customer-token')->plainTextToken;
+            return $customer;
+        });
+
+        $token = $customer->createToken('flutter-app')->plainTextToken;
 
         return (new CustomerResource($customer))
             ->additional(['token' => $token])
@@ -52,31 +62,37 @@ class AuthController extends Controller
             ->setStatusCode(201);
     }
 
-    public function login(Request $request): JsonResponse
+    /**
+     * Login: no_hp + password -> token sanctum.
+     */
+    public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $validated = $request->validate([
             'no_hp' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        $customer = Customer::where('no_hp', $credentials['no_hp'])->first();
+        $customer = Customer::where('no_hp', $validated['no_hp'])->first();
 
-        if (! $customer || ! Hash::check($credentials['password'], $customer->password)) {
+        if (! $customer || ! Hash::check($validated['password'], $customer->password)) {
             return response()->json([
-                'message' => 'No. HP atau password salah.',
+                'message' => 'Kredensial salah.',
             ], 401);
         }
 
-        $token = $customer->createToken('customer-token')->plainTextToken;
+        $token = $customer->createToken('flutter-app')->plainTextToken;
 
         return (new CustomerResource($customer))
             ->additional(['token' => $token])
             ->response();
     }
 
-    public function logout(Request $request): JsonResponse
+    /**
+     * Logout: hapus token aktif.
+     */
+    public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()->tokens()->delete();
 
         return response()->json([
             'message' => 'Berhasil logout.',
