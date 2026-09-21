@@ -22,6 +22,7 @@ class Voucher extends Model
         'hasil_spin_id',
         'customer_id',
         'kode_voucher',
+        'keterangan',
         'status',
         'tanggal_kadaluarsa',
     ];

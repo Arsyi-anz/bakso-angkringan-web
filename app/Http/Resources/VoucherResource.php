@@ -18,6 +18,7 @@ class VoucherResource extends JsonResource
         return [
             'id' => $this->id,
             'kode_voucher' => $this->kode_voucher,
+            'keterangan' => $this->keterangan,
             'status' => $this->status,
             'tanggal_kadaluarsa' => $this->tanggal_kadaluarsa,
             'reward' => $this->whenLoaded('hasilSpin', fn () => [

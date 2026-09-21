@@ -10,22 +10,45 @@ use App\Models\Transaksi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TransaksiController extends Controller
 {
     /**
-     * Riwayat transaksi customer login.
+     * Riwayat transaksi customer login (default: bulan berjalan).
+     * Query params: ?bulan=YYYY-MM dan ?limit=N untuk transaksi terakhir.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        return TransaksiResource::collection(
-            Transaksi::with(['detailTransaksis.produk'])
-                ->where('customer_id', $request->user()->id)
-                ->latest('tanggal_transaksi')
-                ->get(),
-        );
+        if ($request->filled('bulan')) {
+            $request->validate([
+                'bulan' => ['required', 'date_format:Y-m'],
+            ]);
+        }
+
+        if ($request->filled('limit')) {
+            $request->validate([
+                'limit' => ['required', 'integer', 'min:1', 'max:100'],
+            ]);
+        }
+
+        $bulan = $request->query('bulan');
+        $awalBulan = $bulan
+            ? Carbon::createFromFormat('Y-m', $bulan)->startOfMonth()
+            : Carbon::now()->startOfMonth();
+
+        $query = Transaksi::with(['detailTransaksis.produk'])
+            ->where('customer_id', $request->user()->id)
+            ->whereBetween('tanggal_transaksi', [$awalBulan, $awalBulan->copy()->endOfMonth()])
+            ->latest('tanggal_transaksi');
+
+        if ($request->filled('limit')) {
+            $query->limit((int) $request->query('limit'));
+        }
+
+        return TransaksiResource::collection($query->get());
     }
 
     /**

@@ -20,6 +20,18 @@ use Illuminate\Validation\Rule;
 class HasilSpinController extends Controller
 {
     /**
+     * Deskripsi reward yang bisa dimenangkan dari spin.
+     * Hasil spin masuk ke keterangan voucher agar customer ingat reward-nya.
+     */
+    private const REWARDS = [
+        'Gratis 1 porsi bakso angkringan',
+        'Gratis 1 porsi bakso telur',
+        'Gratis 1 minuman es teh',
+        'Diskon 10% untuk transaksi berikutnya',
+        'Diskon 15% untuk transaksi berikutnya',
+    ];
+
+    /**
      * Riwayat spin customer login.
      */
     public function index(Request $request): AnonymousResourceCollection
@@ -96,18 +108,24 @@ class HasilSpinController extends Controller
                 ], 403);
             }
 
-            $sudah = HasilSpin::where('bukti_ig_story_id', $bukti->id)
-                ->whereDate('tanggal_spin', now()->toDateString())
-                ->exists();
+            if ($bukti->tanggal_kirim->addHours(24)->isPast()) {
+                return response()->json([
+                    'message' => 'Link bukti IG Story sudah lewat 24 jam.',
+                ], 403);
+            }
+
+            $sudah = HasilSpin::where('bukti_ig_story_id', $bukti->id)->exists();
             if ($sudah) {
                 return response()->json([
-                    'message' => 'Bukti IG ini sudah dipakai untuk spin hari ini.',
+                    'message' => 'Bukti IG ini sudah pernah dipakai untuk spin.',
                 ], 409);
             }
         }
 
         // --- Simpan spin + reward deterministic (selalu voucher) ---
-        $hasilSpin = DB::transaction(function () use ($request, $customerId, $transaksi, $bukti): HasilSpin {
+        $reward = self::REWARDS[array_rand(self::REWARDS)];
+
+        $hasilSpin = DB::transaction(function () use ($request, $customerId, $transaksi, $bukti, $reward): HasilSpin {
             $hasilSpin = HasilSpin::create([
                 'customer_id' => $customerId,
                 'transaksi_id' => $transaksi?->id,
@@ -119,6 +137,7 @@ class HasilSpinController extends Controller
             $hasilSpin->voucher()->create([
                 'customer_id' => $customerId,
                 'kode_voucher' => 'SPIN-'.strtoupper(Str::random(8)),
+                'keterangan' => $reward,
                 'status' => 'aktif',
                 'tanggal_kadaluarsa' => now()->addDays(7),
             ]);
