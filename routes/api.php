@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\BuktiIgStoryController;
 use App\Http\Controllers\Api\HasilSpinController;
 use App\Http\Controllers\Api\ProfilController;
 use App\Http\Controllers\Api\ProdukController;
+use App\Http\Controllers\Api\RewardController;
 use App\Http\Controllers\Api\TransaksiController;
 use App\Http\Controllers\Api\VoucherController;
 use Illuminate\Http\Request;
@@ -47,4 +48,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // B7 - Bukti IG Story
     Route::post('/bukti-ig-story', [BuktiIgStoryController::class, 'store']);
     Route::get('/bukti-ig-story', [BuktiIgStoryController::class, 'index']);
+
+    // B8 - Reward & kelayakan hampers bulanan
+    Route::get('/reward', [RewardController::class, 'hampers']);
 });

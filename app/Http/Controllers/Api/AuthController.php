@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
+use App\Models\Referral;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -38,6 +41,7 @@ class AuthController extends Controller
                 'nama' => $validated['nama'],
                 'no_hp' => $validated['no_hp'],
                 'password' => $validated['password'],
+                'kode_referral' => $this->generateKodeReferral(),
                 'tanggal_daftar' => $validated['tanggal_daftar'] ?? now(),
             ]);
 
@@ -46,7 +50,7 @@ class AuthController extends Controller
                     'customer_id' => $referralPemberi->id,
                     'referred_customer_id' => $customer->id,
                     'kode_referral' => $customer->kode_referral,
-                    'status_valid' => 'pending',
+                    'status_valid' => 'valid',
                     'tanggal' => now(),
                 ]);
             }
@@ -97,5 +101,17 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Berhasil logout.',
         ]);
+    }
+
+    /**
+     * Kode referral unik untuk customer baru.
+     */
+    private function generateKodeReferral(): string
+    {
+        do {
+            $kode = 'REF-'.strtoupper(Str::random(8));
+        } while (Customer::where('kode_referral', $kode)->exists());
+
+        return $kode;
     }
 }
