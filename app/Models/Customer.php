@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -41,11 +42,16 @@ class Customer extends Model
 
     public function referralGiven()
     {
-        return $this->hasMany(Referral::class);
+        return $this->hasMany(Referral::classforeignId('referral_customer_id')->nullable() ?? $this->hasMany(Referral::class));
     }
 
     public function referrals()
     {
         return $this->hasMany(Referral::class);
+    }
+
+    public function transaksis(): HasMany
+    {
+        return $this->hasMany(Transaksi::class);
     }
 }
