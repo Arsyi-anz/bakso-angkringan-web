@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\BuktiIgStoryController;
 use App\Http\Controllers\Api\HasilSpinController;
 use App\Http\Controllers\Api\ProfilController;
 use App\Http\Controllers\Api\ProdukController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\RewardController;
 use App\Http\Controllers\Api\TransaksiController;
 use App\Http\Controllers\Api\VoucherController;
@@ -51,4 +52,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // B8 - Reward & kelayakan hampers bulanan
     Route::get('/reward', [RewardController::class, 'hampers']);
+
+    // B8b - Riwayat referral (customer melihat siapa yang daftar pakai kodenya)
+    Route::get('/referral', [ReferralController::class, 'index']);
+    Route::get('/referral/{referral}', [ReferralController::class, 'show']);
 });
