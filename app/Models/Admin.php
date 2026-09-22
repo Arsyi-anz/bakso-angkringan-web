@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * @property int $id
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $email
  * @property string $password
  */
-class Admin extends Model
+class Admin extends Authenticatable
 {
     use HasFactory;
 
@@ -24,6 +24,7 @@ class Admin extends Model
 
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 
     protected function casts(): array

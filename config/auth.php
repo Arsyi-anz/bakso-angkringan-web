@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\User;
 
 return [
@@ -12,6 +13,9 @@ return [
     | This option defines the default authentication "guard" and password
     | reset "broker" for your application. You may change these values
     | as required, but they're a perfect start for most applications.
+    |
+    | Backend admin panel (web) memakai tabel admins, jadi guard default
+    | web mengarah ke provider `admins`.
     |
     */
 
@@ -40,7 +44,7 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'admins',
         ],
     ],
 
@@ -62,9 +66,14 @@ return [
     */
 
     'providers' => [
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', Admin::class),
+        ],
+
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => User::class,
         ],
 
         // 'users' => [
