@@ -38,21 +38,11 @@ class RewardController extends Controller
             ->whereBetween('tanggal', [$awalBulan, $akhirBulan])
             ->count();
 
-        $syaratTransaksi = 8;
-        $syaratReferral = 3;
+        $syaratTransaksi = Hamper::SYARAT_TRANSAKSI;
+        $syaratReferral = Hamper::SYARAT_REFERRAL;
         $layak = $jumlahTransaksi >= $syaratTransaksi && $jumlahReferral >= $syaratReferral;
 
-        Hamper::updateOrCreate(
-            [
-                'customer_id' => $customerId,
-                'periode' => $periode,
-            ],
-            [
-                'jumlah_repeat_order' => $jumlahTransaksi,
-                'jumlah_referral' => $jumlahReferral,
-                'status_kelayakan' => $layak ? 'memenuhi' : 'belum memenuhi',
-            ],
-        );
+        Hamper::sinkronkanPeriode($periode, $customerId);
 
         $pesan = $layak
             ? 'Selamat, kamu layak mendapatkan hampers bulanan. Klaim hampers pada akhir bulan dengan menunjukkan bukti kelayakan ke admin secara offline.'
