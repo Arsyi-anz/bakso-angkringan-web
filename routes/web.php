@@ -11,7 +11,7 @@ use App\Http\Controllers\Admin\TransaksiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route(auth()->check() ? 'admin.dashboard' : 'login');
 });
 
 // Auth Admin (session guard -> tabel admins)
