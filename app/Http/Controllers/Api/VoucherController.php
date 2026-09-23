@@ -11,15 +11,14 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class VoucherController extends Controller
 {
     /**
-     * Daftar voucher milik customer login.
+     * Daftar SEMUA voucher milik customer login (aktif, terpakai, kedaluwarsa).
+     * Flutter memilah per tab (aktif/terpakai) lewat field status.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
         return VoucherResource::collection(
             Voucher::with('hasilSpin')
                 ->where('customer_id', $request->user()->id)
-                ->where('status', 'aktif')
-                ->whereDate('tanggal_kadaluarsa', '>', now())
                 ->latest()
                 ->get(),
         );
