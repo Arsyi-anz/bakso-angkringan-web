@@ -23,13 +23,13 @@
 
             <div class="mb-3">
                 <label class="form-label small fw-semibold">Email</label>
-                <input type="email" name="email" class="form-control" placeholder="admin@baksoangkringan.com" required autofocus>
+                <input type="email" name="email" class="form-control" placeholder="Masukkan email terdaftar" required autofocus>
             </div>
 
             <div class="mb-3">
                 <label class="form-label small fw-semibold">Password</label>
                 <div class="input-group">
-                    <input type="password" name="password" id="password" class="form-control" placeholder="********" required autocomplete="current-password">
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Masukkan password terdaftar" required autocomplete="current-password">
                     <button type="button" class="btn btn-outline-secondary" id="togglePassword" aria-label="Lihat password">
                         <i class="bi bi-eye"></i>
                     </button>
