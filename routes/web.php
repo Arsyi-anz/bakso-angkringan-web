@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function (): void {
 
     // Program Loyalty
     Route::get('/admin/loyalty/spin-voucher', [LoyaltyController::class, 'spinVoucher'])->name('admin.loyalty.spin-voucher');
+    Route::post('/admin/loyalty/spin-voucher/{voucher}/pakai', [LoyaltyController::class, 'pakaiVoucher'])->name('admin.loyalty.spin-voucher.pakai');
     Route::get('/admin/loyalty/instagram-story', [LoyaltyController::class, 'instagramStory'])->name('admin.loyalty.instagram-story');
     Route::post('/admin/loyalty/instagram-story/{buktiIgStory}/validasi', [LoyaltyController::class, 'validasiStory'])->name('admin.loyalty.instagram-story.validasi');
     Route::post('/admin/loyalty/instagram-story/{buktiIgStory}/tolak', [LoyaltyController::class, 'tolakStory'])->name('admin.loyalty.instagram-story.tolak');

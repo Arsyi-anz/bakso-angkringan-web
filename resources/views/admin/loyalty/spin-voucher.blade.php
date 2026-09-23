@@ -50,7 +50,7 @@
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
-                        <tr><th>Customer</th><th>Kode Voucher</th><th>Status</th><th>Keterangan</th><th>Kadaluarsa</th></tr>
+                        <tr><th>Customer</th><th>Kode Voucher</th><th>Status</th><th>Keterangan</th><th>Kadaluarsa</th><th>Aksi</th></tr>
                     </thead>
                     <tbody>
                         @forelse ($voucher as $v)
@@ -74,9 +74,21 @@
                                 </td>
                                 <td>{{ $v['keterangan'] ?? '-' }}</td>
                                 <td>{{ $v['tanggal_kadaluarsa'] ? \Illuminate\Support\Carbon::parse($v['tanggal_kadaluarsa'])->format('d M Y') : '-' }}</td>
+                                <td class="text-end">
+                                    @if ($v['status'] === 'terpakai')
+                                        <span class="badge badge-soft-info">Sudah dipakai</span>
+                                    @elseif ($v['status'] === 'kedaluwarsa')
+                                        <span class="text-muted small">-</span>
+                                    @else
+                                        <form action="/admin/loyalty/spin-voucher/{{ $v['id'] }}/pakai" method="POST" class="d-inline" onsubmit="return confirm('Pakai voucher {{ $v['kode_voucher'] }}?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-brand">Pakai</button>
+                                        </form>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="text-center text-muted py-4">Belum ada voucher.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">Belum ada voucher.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

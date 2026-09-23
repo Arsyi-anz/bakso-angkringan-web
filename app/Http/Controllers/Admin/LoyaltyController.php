@@ -14,6 +14,10 @@ class LoyaltyController extends Controller
 {
     public function spinVoucher()
     {
+        Voucher::where('status', 'aktif')
+            ->where('tanggal_kadaluarsa', '<', now())
+            ->update(['status' => 'kedaluwarsa']);
+
         $riwayatSpin = HasilSpin::with('customer')
             ->latest('tanggal_spin')
             ->limit(50)
@@ -25,6 +29,17 @@ class LoyaltyController extends Controller
             ->get();
 
         return view('admin.loyalty.spin-voucher', compact('riwayatSpin', 'voucher'));
+    }
+
+    public function pakaiVoucher(Voucher $voucher)
+    {
+        $voucher->update([
+            'status' => now()->greaterThanOrEqualTo($voucher->tanggal_kadaluarsa)
+                ? 'kedaluwarsa'
+                : 'terpakai',
+        ]);
+
+        return back()->with('success', 'Voucher '.$voucher->kode_voucher.' berhasil '.($voucher->status === 'terpakai' ? 'dipakai' : 'ditandai kedaluwarsa').'.');
     }
 
     public function instagramStory()
